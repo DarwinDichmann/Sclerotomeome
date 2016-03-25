@@ -1,0 +1,4 @@
+This folder contains gene count files from Dave's somite project. The counts were created using HTSeq-count function (v0.6.1) on genepool. 
+Darwin April, 3rd, 2014, 
+
+I will probably rename the files before using them in DESeq2 or even edgeR.
