@@ -1,36 +1,41 @@
 ### TITLE: Scleome analysis including second sequencing of peat mutants.
+### AUTHOR: Darwin Sorento Dichmann, (C) 2016
 
-
-### LOAD PACKAGES
-# TODO: add a section that tests for install packages and install if necessary.
-library(DESeq2)
-library(gplots)
-library(RColorBrewer)
-library(ggplot2)
-library(cluster)
-
-
+#################################################
+##########        LOAD PACKAGES        ##########
+#################################################
+# source( "http://bioconductor.org/biocLite.R" )
+# biocLite( "vsn" ) 
+library( vsn )
+library( DESeq2 )
+library( gplots )
+library( RColorBrewer )
+library( ggplot2 )
+library( cluster )
+# TODO: tests for packages and install only if necessary.
+#################################################
 ### DIRECTORY PATHS.
-### Your workdir should contain the folder with the countfiles.
-setwd("./")
-inDir <- file.path( "countFiles/" )
-# inDir <- file.path( paste( getwd(), "count_files/", sep = "/" ) )
 
+### TODO: Create other dirs here?
 
 ### DEFINE COLOR PALETTES
-# PCA plots; adjust number to conditions. See other palettes PCA section.
-# pccol <- colorRampPalette( brewer.pal( 10, "Spectral" ) ) ( 10 )
-
-# Heatmap colors
+### TODO: Move to relevant sections.
+### Heatmap colors
 hmcol <- colorRampPalette( rev( brewer.pal( 9, "RdBu" ) ) ) ( 255 )
-# Distance matrix colors
+### Distance matrix colors
 distcol <- colorRampPalette( rev( brewer.pal(9, "GnBu") ) ) ( 20 )
 
 
-### CREATE EXPERIMENTAL DESIGN TABLE
+#################################################
+#######    EXPERIMENTAL DESIGN TABLE      #######
+#################################################
+
+### Path to HT-Seq count files.
+inDir <- file.path( "countFiles/" )
 countFiles <- list.files( path = inDir, 
                           pattern = "(WT*)|(MUT*)|(SOMA*)|(SOMB*)|(SOMC*)|(SOMD*)|(CTRL*)|(DIR*)|(HEAD*)|(TRUNK*)" ) # No space between patterns
-# Create experimental design list corresponding to file order.
+
+### Create experimental design list corresponding to file order.
 sampleIDs <- c( "CTRL1", "CTRL2", "CTRL3", "CTRL4", 
                 "DIR1", "DIR2", "DIR3", "DIR4", 
                 "HEAD",
@@ -68,45 +73,71 @@ expDesign <- data.frame( sampleName = sampleIDs,
                          type = expType,
                          tissue = tissueType,
                          condition = expConditions )
-# Clean up temp vars.
+# Clean up.
 rm( countFiles, sampleIDs, expConditions, expType, tissueType )
 expDesign # OK
 
-
-### DESeq2 
-## TODO Investigate MultiFactorial design
+#################################################
+##########           DESeq2            ##########
+#################################################
 dds <- DESeqDataSetFromHTSeqCount(sampleTable = expDesign, 
                                   directory = inDir, 
                                   design = ~condition)
 dds <- DESeq( dds )
 
-
-### INITIAL TRANSFORMATIONS
-# Regularized log transformation
+#################################################
+######        DATA TRANSFORMATIONS         ######
+#################################################
+### Regularized log transformation
 rld <- rlog( dds, blind = TRUE )
-# Variance stabilized transformation
+
+### Variance stabilized transformation
 vsd <- varianceStabilizingTransformation( dds, blind = TRUE )
 
 
-### EXPLORATORY SAMPLE ANALYSIS
-# PCA
-# Better colors for PCA plot.
-pccol <- c( '#a6cee3','#1f78b4','#6a3d9a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#b2df8a')
-#6a3d9a previous pccol2[10]
-#b2df8a previous pccol[3]
-# rld_pca <- plotPCA( rld, intgroup = "condition", returnData = FALSE ) +
-#         theme_bw() + ggtitle("rld transformed") +
-#         scale_colour_manual( values = pccol ) +
-#         geom_text( aes( label = name ))
-# rld_pca
+#################################################
+######     EXPLORATORY SAMPLE ANALYSIS    #######
+#################################################
+### Determine best transformation
+notAllZero <- rowSums(counts(dds)) > 0 
+meanSdPlot(log2(counts(dds, normalized = TRUE)[notAllZero,]+1))
+meanSdPlot(assay(rld[notAllZero,])) # Better
+meanSdPlot(assay(vsd[notAllZero,]))
+rm(notAllZero)
+## TODO: facet plots and save them
+#################################################
 
-vsd_pca <- plotPCA( vsd, intgroup = "condition", returnData = FALSE ) +
-        geom_point( size = 4, alpha = 0.5 ) +
-        theme_bw() + ggtitle("vsd transformed") +
-        scale_colour_manual( values = pccol ) +
-        geom_text( aes( label = name ) )
-# TODO: fix text position adn size. (Could add a 'series' component?)
-vsd_pca
+
+#################################################
+### PCA plot
+### Color palette: Qualitiative, 10-class paired from colorbrewer2.org
+### A reference in a journal article like this:
+### Brewer, Cynthia A., 200x. http://www.ColorBrewer2.org, accessed 3/27/2016.
+dir.create("EDA_plots/")
+pcaData <- plotPCA(vsd, intgroup = 'condition', returnData = TRUE)
+# PC1:49% variance, PC2: 23% variance
+pcaData$condition <- factor(x = pcaData$condition, 
+                            levels = c("Control", "Directed",
+                                       "SomA", "SomB", "SomC", "SomD",
+                                       "Wild-type", "Mutant",
+                                       "Head", "Trunk" ))
+pccol <- c( '#a6cee3','#1f78b4',
+            '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', 
+            '#b2df8a', '#33a02c', 
+            '#cab2d6', '#6a3d9a' )
+
+pca <- ggplot( data = pcaData, aes( pcaData[,1], pcaData[,2] ) ) + theme_bw()
+pca <- pca + geom_point( size = 4, alpha = 0.8, aes( colour = condition ) )
+pca <- pca + scale_colour_manual( values = pccol, guide_legend( "" ) ) 
+pca <- pca + ggtitle( "PCA plot\nrld transformed values" )
+pca <- pca + labs( x = "PC1: 49% variance", y = "PC2: 23% variance" )
+pca <- pca + theme( legend.position = c( 0.85, 0.2 ) )
+# pca <- pca + geom_text( aes( label = name, color = group ) )
+pca
+ggsave( "EDA_plots/PCA.pdf", width = 8, height = 8 )
+
+
+
 
 #### OK UNTIL HERE WED 2/10/2016
 res1 <- results(dds)
