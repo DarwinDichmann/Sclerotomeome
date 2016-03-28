@@ -1,4 +1,4 @@
-### TITLE: Scleome analysis including second sequencing of peat mutants.
+### TITLE: Sclerotomeome analysis including second sequencing of peat mutants.
 ### AUTHOR: Darwin Sorento Dichmann, (C) 2016
 
 #################################################
@@ -14,16 +14,12 @@ library( ggplot2 )
 library( cluster )
 # TODO: tests for packages and install only if necessary.
 #################################################
-### DIRECTORY PATHS.
-
-### TODO: Create other dirs here?
 
 ### DEFINE COLOR PALETTES
 ### TODO: Move to relevant sections.
 ### Heatmap colors
 hmcol <- colorRampPalette( rev( brewer.pal( 9, "RdBu" ) ) ) ( 255 )
-### Distance matrix colors
-distcol <- colorRampPalette( rev( brewer.pal(9, "GnBu") ) ) ( 20 )
+
 
 
 #################################################
@@ -75,7 +71,8 @@ expDesign <- data.frame( sampleName = sampleIDs,
                          condition = expConditions )
 # Clean up.
 rm( countFiles, sampleIDs, expConditions, expType, tissueType )
-expDesign # OK
+# expDesign # OK
+
 
 #################################################
 ##########           DESeq2            ##########
@@ -84,6 +81,8 @@ dds <- DESeqDataSetFromHTSeqCount(sampleTable = expDesign,
                                   directory = inDir, 
                                   design = ~condition)
 dds <- DESeq( dds )
+res <- results( dds )
+
 
 #################################################
 ######        DATA TRANSFORMATIONS         ######
@@ -127,42 +126,38 @@ pccol <- c( '#a6cee3','#1f78b4',
             '#cab2d6', '#6a3d9a' )
 
 pca <- ggplot( data = pcaData, aes( pcaData[,1], pcaData[,2] ) ) + theme_bw()
-pca <- pca + geom_point( size = 4, alpha = 0.8, aes( colour = condition ) )
+pca <- pca + geom_point( size = 4, alpha = 0.7, aes( colour = condition ) )
 pca <- pca + scale_colour_manual( values = pccol, guide_legend( "" ) ) 
 pca <- pca + ggtitle( "PCA plot\nrld transformed values" )
 pca <- pca + labs( x = "PC1: 49% variance", y = "PC2: 23% variance" )
 pca <- pca + theme( legend.position = c( 0.85, 0.2 ) )
 # pca <- pca + geom_text( aes( label = name, color = group ) )
-pca
+# pca
 ggsave( "EDA_plots/PCA.pdf", width = 8, height = 8 )
+rm(pca, pcaData) # Clean up.
+
+
+#################################################
+#########       OTHER EDA PLOTS        ##########
+#################################################
+plotDispEsts(dds) # OK
+
+### Correlation matrix plots
+rld_dist <- as.matrix( dist( t( assay( rld ) ) ) )
+distcol <- colorRampPalette( rev( brewer.pal(9, "GnBu") ) ) ( 20 )
+heatmap.2 (rld_dist, trace= "none", col= distcol, Colv= FALSE, Rowv= FALSE, dendrogram= "none" ,
+           main= "rld",
+           key.title= NA, key.ylab=NA, key.ytick=NA, density.info="none",
+           key.xlab= "Difference",
+           keysize= .8 )
+
+
+#### OK UNTIL HERE 3/27/2016
 
 
 
 
-#### OK UNTIL HERE WED 2/10/2016
-res1 <- results(dds)
-res1
 
-plot( attr( res1, "filterNumRej" ), type = 'b', ylab= "number of rejections")
-
-#plotDispEsts(dds)
-
-
-# Correlation matrix plots
-# rld transformed
-# rld_dist <- as.matrix( dist( t( assay( rld ) ) ) )
-# heatmap.2 (rld_dist, trace= "none", col= distcol, Colv= FALSE, Rowv= FALSE, dendrogram= "none" ,
-#            main= "rld", 
-#            key.title= NA, key.ylab=NA, key.ytick=NA, density.info="none", 
-#            key.xlab= "Similarity",
-#            keysize= .8 )
-# # vsd transformed
-# vsd_dist <- as.matrix( dist( t( assay(vsd ) ) ) )
-# rld_cor <- heatmap.2 (vsd_dist, trace= "none", col= distcol, Colv= FALSE, Rowv= FALSE, dendrogram= "none" ,
-#                       main= "vsd", 
-#                       key.title= NA, key.ylab=NA, key.ytick=NA, density.info="none", 
-#                       key.xlab= "Similarity",
-#                       keysize= .8 )
 
 
 ### GET DESeq2 RESULTS
