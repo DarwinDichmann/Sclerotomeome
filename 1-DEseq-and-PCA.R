@@ -184,19 +184,18 @@ pc_data$condition <- factor(x = pc_data$condition,
                                        "SomA", "SomB", "SomC", "SomD",
                                        "Wild-type", "Mutant",
                                        "Head", "Trunk"))
-
+# Plot
 pc_plot <- ggplot(data = pc_data, aes(pc_data[, 1], pc_data[, 2])) 
 pc_plot <- pc_plot + theme_cowplot()
 pc_plot <- pc_plot + geom_point(size = 4, alpha = 0.7, aes(colour = condition))
-pc_plot <- pc_plot + scale_colour_manual(values = pc_col, guide_legend( "" )) 
+pc_plot <- pc_plot + scale_colour_manual(values = pc_col, guide_legend("")) 
 pc_plot <- pc_plot + ggtitle("Principal Component Analysis\nof Somite and Peat Data")
 pc_plot <- pc_plot + labs(x = "PC1: 49% variance", y = "PC2: 23% variance")
-pc_plot <- pc_plot + theme(legend.position = c(0.8, 0.3))
+pc_plot <- pc_plot + theme(legend.position = c(0.7, 0.3))
 # pc_plot <- pc_plot + geom_text(aes(label = name, color = group))  # Too messy.
 pc_plot
 ggsave("EDA-plots/PCA-full.pdf", width = 7, height = 5)
 rm(pc_plot, pc_data) # Clean up.
-# TODO: Fix title
 
 
 # PC plot - Somite data only.
@@ -211,7 +210,7 @@ pc_data$condition <- factor(x = pc_data$condition,
                                        "SomD",
                                        "Trunk",
                                        "Head"))
-
+# Plot
 pc_plot <- ggplot(data = pc_data, aes(pc_data[, 1], pc_data[, 2])) 
 pc_plot <- pc_plot + theme_cowplot()
 pc_plot <- pc_plot + geom_point(size = 4, alpha = 0.7, aes(colour = condition))
@@ -230,7 +229,7 @@ pc_data <- plotPCA(rld_peat, intgroup = 'condition', returnData = TRUE)
 # PC1:45% variance, PC2: 35% variance
 pc_data$condition <- factor(x = pc_data$condition, 
                             levels = c("Wild-type", "Mutant"))
-
+# Plot
 pc_plot <- ggplot(data = pc_data, aes(pc_data[, 1], pc_data[, 2])) 
 pc_plot <- pc_plot + theme_cowplot()
 pc_plot <- pc_plot + geom_point(size = 4, alpha = 0.7, aes(colour = condition))
