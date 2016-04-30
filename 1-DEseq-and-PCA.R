@@ -148,7 +148,7 @@ meanSdPlot(assay(vsd_peat[not_all_zero, ]))  # Not much different from rld.
 # All further analysis will use rld transformed data.
 rm(not_all_zero, list = ls(pattern = "vsd"))  # Clean.
 
-# Save data objects for use in proceeding analysis.
+#### Save data objects for use in proceeding analysis. ####
 dir.create("DESeq-objects")
 save(dds_full, res_full, rld_full, file = "DESeq-objects/DDS_full.rda")
 save(dds_som, res_som, rld_som, file = "DESeq-objects/DDS_somites.rda")
@@ -158,17 +158,93 @@ save(dds_peat, res_peat, rld_peat, file = "DESeq-objects/DDS_peat.rda")
 #################################################
 ######     EXPLORATORY SAMPLE ANALYSIS    #######
 #################################################
+dir.create("EDA-plots/")
+
+# Principle Component plots of samples
+# Color palette: Qualitiative, 10-class paired from colorbrewer2.org
+# A reference in a journal article like this:
+# Brewer, Cynthia A., 200x. http://www.ColorBrewer2.org, accessed 3/27/2016.
+pc_col <- c('#a6cee3',  # Light blue
+            '#1f78b4',  # Blue
+            '#fb9a99',  # Red
+            '#e31a1c',  # Pink
+            '#fdbf6f',  # Light orange
+            '#ff7f00',  # Orange
+            '#b2df8a',  # Light green 
+            '#33a02c',  # Green
+            '#cab2d6',  # Light purple
+            '#6a3d9a')  # The color previously known as Purple
+
+
+# Full set.
+pc_data <- plotPCA(rld_full, intgroup = 'condition', returnData = TRUE)
+# PC1:49% variance, PC2: 23% variance
+pc_data$condition <- factor(x = pc_data$condition, 
+                            levels = c("Control", "Directed",
+                                       "SomA", "SomB", "SomC", "SomD",
+                                       "Wild-type", "Mutant",
+                                       "Head", "Trunk"))
+
+pc_plot <- ggplot(data = pc_data, aes(pc_data[, 1], pc_data[, 2])) 
+pc_plot <- pc_plot + theme_cowplot()
+pc_plot <- pc_plot + geom_point(size = 4, alpha = 0.7, aes(colour = condition))
+pc_plot <- pc_plot + scale_colour_manual(values = pc_col, guide_legend( "" )) 
+pc_plot <- pc_plot + ggtitle("Principal Component Analysis\nof Somite and Peat Data")
+pc_plot <- pc_plot + labs(x = "PC1: 49% variance", y = "PC2: 23% variance")
+pc_plot <- pc_plot + theme(legend.position = c(0.8, 0.3))
+# pc_plot <- pc_plot + geom_text(aes(label = name, color = group))  # Too messy.
+pc_plot
+ggsave("EDA-plots/PCA-full.pdf", width = 7, height = 5)
+rm(pc_plot, pc_data) # Clean up.
+# TODO: Fix title
+
+
+# PC plot - Somite data only.
+pc_data <- plotPCA(rld_som, intgroup = 'condition', returnData = TRUE)
+# PC1:44% variance, PC2: 27% variance
+pc_data$condition <- factor(x = pc_data$condition, 
+                            levels = c("Control", 
+                                       "Directed",
+                                       "SomA", 
+                                       "SomB", 
+                                       "SomC", 
+                                       "SomD",
+                                       "Trunk",
+                                       "Head"))
+
+pc_plot <- ggplot(data = pc_data, aes(pc_data[, 1], pc_data[, 2])) 
+pc_plot <- pc_plot + theme_cowplot()
+pc_plot <- pc_plot + geom_point(size = 4, alpha = 0.7, aes(colour = condition))
+pc_plot <- pc_plot + scale_colour_manual(values = pc_col[c(1:6, 9:10)], guide_legend("")) 
+pc_plot <- pc_plot + ggtitle("Principal Component Analysis\nof Somite Data")
+pc_plot <- pc_plot + labs(x = "PC1: 44% variance", y = "PC2: 27% variance")
+pc_plot <- pc_plot + theme(legend.position = c(0.2, 0.8))
+# pc_plot <- pc_plot + geom_text(aes(label = name, color = group))  # Too messy.
+pc_plot
+ggsave("EDA-plots/PCA-plot-somites.pdf", width = 7, height = 5)
+rm(pc_plot, pc_data)  # Clean up.
+
+
+# Peat data only.
+pc_data <- plotPCA(rld_peat, intgroup = 'condition', returnData = TRUE)
+# PC1:45% variance, PC2: 35% variance
+pc_data$condition <- factor(x = pc_data$condition, 
+                            levels = c("Wild-type", "Mutant"))
+
+pc_plot <- ggplot(data = pc_data, aes(pc_data[, 1], pc_data[, 2])) 
+pc_plot <- pc_plot + theme_cowplot()
+pc_plot <- pc_plot + geom_point(size = 4, alpha = 0.7, aes(colour = condition))
+pc_plot <- pc_plot + scale_colour_manual(values = pc_col[7:8], guide_legend("")) 
+pc_plot <- pc_plot + ggtitle("Principal Component Analysis\nof Peat Data")
+pc_plot <- pc_plot + labs(x = "PC1: 45% variance", y = "PC2: 35% variance")
+pc_plot <- pc_plot + theme(legend.position = c(0.2, 0.8))
+# pc_plot <- pc_plot + geom_text(aes(label = name, color = group))  # Too messy.
+pc_plot
+ggsave("EDA-plots/PCA-plot-peat.pdf", width = 7, height = 5)
+rm(pc_plot, pc_data, pc_col)  # Clean up.
 
 
 
 
 
-
-
-
-
-
-
-
-# TODO: EDA plots
-# 
+# TODO: Other EDA plots
