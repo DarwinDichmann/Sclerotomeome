@@ -243,7 +243,19 @@ ggsave("EDA-plots/PCA-plot-peat.pdf", width = 7, height = 5)
 rm(pc_plot, pc_data, pc_col)  # Clean up.
 
 
+# Distance matrix plot.
+# Tells the same story as PC plots.
+pdf(file = "EDA-plots/dist-matrix-full.pdf", width = 7, height = 7)
+dist_rld <- as.matrix(dist(t(assay(rld_full))))
+dist_col <- colorRampPalette(rev(brewer.pal(9, "GnBu"))) (20)
+heatmap.2(dist_rld, trace= "none", col= dist_col, Colv= FALSE, Rowv= FALSE,
+          dendrogram= "none",
+          main= "Distance matrix of\nR-log transformed somite data",
+          key.title= NA, key.ylab=NA, key.ytick=NA, density.info="none",
+          key.xlab= "Distance",
+          keysize= .8)
+dev.off()
+rm(list = ls(pattern = 'dist'))
 
 
-
-# TODO: Other EDA plots
+# Proceed to DE analysis in other scripts.
