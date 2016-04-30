@@ -1,11 +1,28 @@
-### TITLE: Sclerotomeome analysis including second sequencing of peat mutants.
-### AUTHOR: Darwin Sorento Dichmann, (C) 2016
+# TITLE: Sclerotomeome analysis, including second sequencing of peat mutants.
+
+# DESCRIPTION: This script is the first of the analysis and contains the 
+# experimental design for all samples in the project, as well as subsets for 
+# targeted DE analysis of somite samples and peat mutants.
+# The experimental designs are used to perform test for differential gene 
+# expression analysis using DESeq2. The resulting DESeq2 and results objects are
+# saved to be loaded in proceeding scripts that focus specific analysis.
+
+# This script also creates quality and principal component analysis plots.
+
+# *The somite data set* includes dissected somites samples as well as 
+# sclerotomeome-directed PSM samples. These are all FACS-sorted based on YFP
+# expression driven by the Dll1 promoter.
+
+# *The peat data set" consists of triplicates of trunk tissue for each of the two conditions: wild-type and peat null mutants.
+
+# AUTHOR: Darwin Sorento Dichmann, (C) 2016.
 
 #################################################
 ##########        LOAD PACKAGES        ##########
 #################################################
 # source("http://bioconductor.org/biocLite.R")
 # biocLite("vsn") 
+# TODO: tests for packages and use require() to install only if necessary.
 library(DESeq2)
 library(gplots)
 library(RColorBrewer)
@@ -13,15 +30,13 @@ library(ggplot2)
 library(cowplot)
 library(cluster)
 library(vsn)
-# TODO: tests for packages and use require() to install only if necessary.
-
 # sessionInfo()
+
 
 #################################################
 #######    EXPERIMENTAL DESIGN TABLES      ######
 #################################################
-
-### Use pattern matching to get HT-Seq count files.
+# Use pattern matching to get HT-Seq count files.
 count_dir <- file.path("countFiles/")
 count_files <- list.files(path = count_dir, 
                           pattern = c("(WT*)|(MUT*)|",
@@ -29,12 +44,12 @@ count_files <- list.files(path = count_dir,
                                       "(CTRL*)|(DIR*)|", 
                                       "(HEAD*)|(TRUNK*)"))
 
-### Create experimental design list corresponding to file order.
+# Create experimental design list corresponding to file order.
 sample_IDs <- c("CTRL1", "CTRL2", "CTRL3", "CTRL4", 
                 "DIR1", "DIR2", "DIR3", "DIR4", 
                 "HEAD",
                 "MUT1", "MUT2", "MUT3",
-                "SOMA1", "SOMA3", "SOMA4", # SOMA2 removed.
+                "SOMA1", "SOMA3", "SOMA4",  # SOMA2 removed.
                 "SOMB1", "SOMB2", "SOMB3", "SOMB4", 
                 "SOMC1", "SOMC2", "SOMC3", "SOMC4", 
                 "SOMD1", "SOMD2", "SOMD3", "SOMD4",
@@ -76,9 +91,8 @@ rm(count_files, sample_IDs, exp_seq, exp_groups, tissue_type)  # Clean up.
 
 
 #################################################
-##########        DESeq2 Results        #########
+##########        DESeq2 RESULTS        #########
 #################################################
-
 # DESeq analysis and results are performed here. 
 # Resulting objects are saved for loading in other scrips that detail either 
 # the somite or peat section of the analysis.
@@ -110,7 +124,7 @@ res_peat <- results(dds_peat)
 ######        DATA TRANSFORMATIONS         ######
 #################################################
 
-# Use regularized log and variance stabilization transformations to 
+# Use plots of regularized log and variance stabilization transformations to 
 # determine the lowest SD-mean dependency.
 
 rld_full <- rlog(dds_full, blind = TRUE)
@@ -123,7 +137,7 @@ rld_peat <- rlog(dds_peat, blind = TRUE)
 vsd_peat <- varianceStabilizingTransformation(dds_peat, blind = TRUE)
 
 
-# Mean-sd plots.
+# Create mean-sd plots.
 
 # Full data set.
 not_all_zero <- rowSums(counts(dds_full)) > 0  # Exlude genes without counts.
@@ -146,7 +160,7 @@ meanSdPlot(assay(vsd_peat[not_all_zero, ]))  # Not much different from rld.
 # TODO: facet plots and save them.
 # In all data sets rld transformation performs marginally better than vsd.
 # All further analysis will use rld transformed data.
-rm(not_all_zero, list = ls(pattern = "vsd"))  # Clean.
+rm(not_all_zero, list = ls(pattern = "vsd"))  # Clean up.
 
 #### Save data objects for use in proceeding analysis. ####
 dir.create("DESeq-objects")
@@ -158,7 +172,7 @@ save(dds_peat, res_peat, rld_peat, file = "DESeq-objects/DDS_peat.rda")
 #################################################
 ######     EXPLORATORY SAMPLE ANALYSIS    #######
 #################################################
-dir.create("EDA-plots/")
+dir.create("EDA-plots/")  # PC and dist matrix plots go here.
 
 # Principle Component plots of samples
 # Color palette: Qualitiative, 10-class paired from colorbrewer2.org
