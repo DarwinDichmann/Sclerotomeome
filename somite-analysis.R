@@ -13,6 +13,8 @@ library(ggplot2)
 library(cowplot)
 library(cluster)
 library(vsn)
+library(cowplot)
+library(plyr)
 # TODO: tests for packages and use require() to install only if necessary.
 
 
@@ -65,141 +67,50 @@ writeDESeqResults <- function(dds, num, denom,
                 return(deg)
         }
 }
+# TODO: Modify function so that it warns if file is already present.
+
+genePlot <- function(gene_2_plot, dds = dds) {
+        # TODO: Add function information
+        # gene_2_plot <- as.character(gene2plot) # Probably redundant.
+        # dds <- dds
+        # plotCount() from DESeq2 returns a dataframe of normalized counts.
+        gene_counts <- plotCounts(dds, gene_2_plot, returnData = TRUE) 
+        
+        ## Summarize and calculate meand and variation.
+        gene_counts_sum <- ddply(.data = gene_counts, .(condition), summarise, 
+                                 N = length(condition), 
+                                 meanExp = mean(count), 
+                                 sdExp = sd(count), 
+                                 seExp = sdExp / sqrt(N))
+        
+        ## Set the limits for the error-bars
+        limits <- aes(ymax = meanExp + seExp, ymin = meanExp - seExp)
+        
+        ## Create plot with individual samples, mean, and SEM errorbars.
+        pl <-ggplot(gene_counts_sum, aes(x = condition, y = meanExp)) 
+        pl <- pl + geom_point(size = 2, alpha = 0.5)  # Do I need this?
+        pl <- pl + theme_bw() + ggtitle(gene_2_plot)
+        pl <- pl + xlab("") 
+        pl <- pl + ylab("Normalized counts (mean + SEM)") 
+        pl <- pl + geom_errorbar(limits, 
+                                 width = 0.25, 
+                                 size = 1, 
+                                 alpha = 0.5)
+        pl <- pl + geom_line(aes(group = "meanExp"), 
+                             size = 1, 
+                             alpha = 0.5) 
+        pl <- pl + geom_point(data = gene_counts, 
+                              aes(condition, count), 
+                              position = position_jitter(0.1, 0), 
+                              color = "dodgerblue2",
+                              size = 4, 
+                              alpha = 0.7)
+        pl  # TODO: I could add a ggsave option or use cowplot.
+}
 
 
-#################################################
-#######    EXPERIMENTAL DESIGN TABLE      #######
-#################################################
-
-### Path to HT-Seq count files.
-count_dir <- file.path("countFiles/")
-count_files <- list.files(path = count_dir, 
-                          pattern = "(SOMA*)|(SOMB*)|(SOMC*)|(SOMD*)|(CTRL*)|(DIR*)|(HEAD*)|(TRUNK*)" ) # No space between patterns
-
-### Create experimental design list corresponding to file order.
-sample_IDs <- c("CTRL1", "CTRL2", "CTRL3", "CTRL4", 
-                "DIR1", "DIR2", "DIR3", "DIR4", 
-                "HEAD",
-                "SOMA1", "SOMA3", "SOMA4", # SOMA2 removed.
-                "SOMB1", "SOMB2", "SOMB3", "SOMB4", 
-                "SOMC1", "SOMC2", "SOMC3", "SOMC4", 
-                "SOMD1", "SOMD2", "SOMD3", "SOMD4",
-                "TRUNK" )  
-
-exp_groups <- c(rep("Control", 4), 
-                rep("Directed", 4),
-                "Head",
-                rep("SomA", 3),
-                rep("SomB", 4),
-                rep("SomC", 4),
-                rep("SomD", 4),
-                "Trunk")  
-
-
-exp_design <- data.frame(sampleName = sample_IDs, 
-                         fileName = count_files,
-                         # lib_type = exp_seq,
-                         # tissue = tissue_type,
-                         condition = exp_groups)
-
-rm(count_files, sample_IDs, exp_seq, exp_groups, tissue_type)  # Clean up.
-exp_design # OK
-
-
-#################################################
-##########           DESeq2            ##########
-#################################################
-dds <- DESeqDataSetFromHTSeqCount(sampleTable = exp_design, 
-                                  directory = count_dir, 
-                                  design = ~ condition)
-dds <- DESeq(dds)
-res <- results(dds)
-
-
-#################################################
-######        DATA TRANSFORMATIONS         ######
-#################################################
-### Regularized log transformation
-rld <- rlog(dds, blind = TRUE)
-
-### Variance stabilized transformation
-vsd <- varianceStabilizingTransformation(dds, blind = TRUE)
-
-
-#################################################
-######     EXPLORATORY SAMPLE ANALYSIS    #######
-#################################################
-### Determine best transformation
-not_all_zero <- rowSums(counts(dds)) > 0 
-meanSdPlot(log2(counts(dds, normalized = TRUE)[not_all_zero, ] + 1))
-meanSdPlot(assay(rld[not_all_zero, ])) # Better
-meanSdPlot(assay(vsd[not_all_zero, ]))
-rm(not_all_zero)  # Might need this later
-## TODO: facet plots and save them
-#################################################
-
-
-#################################################
-### PCA plot
-### Color palette: Qualitiative, 10-class paired from colorbrewer2.org
-### A reference in a journal article like this:
-### Brewer, Cynthia A., 200x. http://www.ColorBrewer2.org, accessed 3/27/2016.
-# dir.create("EDA-plots/")
-pc_data <- plotPCA(rld, intgroup = 'condition', returnData = TRUE)
-# PC1:49% variance, PC2: 23% variance
-pc_data$condition <- factor(x = pc_data$condition, 
-                            levels = c("Control", "Directed",
-                                       "SomA", "SomB", "SomC", "SomD",
-                                       "Head", "Trunk"))
-
-# Color palette: Qualitiative, 10-class paired from colorbrewer2.org
-# A reference in a journal article like this:
-# Brewer, Cynthia A., 200x. http://www.ColorBrewer2.org, accessed 3/27/2016.
-pc_col <- c('#a6cee3',  # Light blue
-            '#1f78b4',  # Blue
-            '#fb9a99',  # Pink
-            '#e31a1c',  # Red
-            '#fdbf6f',  # light orange
-            '#ff7f00',  # Orange
-            '#b2df8a',  # Light green
-            '#33a02c')  # Green
-
-
-pc_plot <- ggplot(data = pc_data, aes(pc_data[, 1], pc_data[, 2])) 
-pc_plot <- pc_plot + theme_bw()
-pc_plot <- pc_plot + geom_point(size = 4, alpha = 0.7, aes(colour = condition))
-pc_plot <- pc_plot + scale_colour_manual(values = pc_col, guide_legend( "" )) 
-pc_plot <- pc_plot + ggtitle("Principal Component Analysis\nof Somite Data")
-pc_plot <- pc_plot + labs(x = "PC1: 49% variance", y = "PC2: 23% variance")
-pc_plot <- pc_plot + theme(legend.position = c(0.85, 0.2))
-# pc_plot <- pc_plot + geom_text(aes(label = name, color = group))  # Too messy.
-pc_plot
-ggsave("EDA_plots/PCA.pdf", width = 8, height = 8 )
-rm(pc_plot, pc_data) # Clean up.
-# TODO: Fix title
-
-#################################################
-#########       OTHER EDA PLOTS        ##########
-#################################################
-# plotDispEsts(dds) # OK
-
-### Correlation matrix plots
-dist_rld <- as.matrix(dist(t(assay(rld))))
-dist_col <- colorRampPalette(rev(brewer.pal(9, "GnBu"))) (100)
-heatmap.2(dist_rld, trace= "none", col= dist_col, Colv= FALSE, Rowv= FALSE,
-          dendrogram= "none",
-          main= "Distance matrix of\nR-log transformed somite data",
-          key.title= NA, key.ylab=NA, key.ytick=NA, density.info="none",
-          key.xlab= "Distance",
-          keysize= .8)
-
-
-#### OK UNTIL HERE 3/27/2016
-
-
-### GET DESeq2 RESULTS
-
-
+#### Load DESeq2 objects. ####
+load("DESeq-objects/DDS_somites.rda")
 
 
 
@@ -220,12 +131,13 @@ heatmap.2(dist_rld, trace= "none", col= dist_col, Colv= FALSE, Rowv= FALSE,
 
 
 # Write Scl and peat DEGs to files.
-# TODO: Modify function so that it warns if file is already present.
 dir.create("DEG-lists")
 
 
-deg_scl <- writeDESeqResults(dds = dds, num = "Directed", denom = "Control",return_data = TRUE, filename = "DEG-lists/deg_scl.txt")
+deg_scl <- writeDESeqResults(dds = dds_som, 
+                             num = "Directed", 
+                             denom = "Control",
+                             return_data = TRUE, 
+                             filename = "DEG-lists/deg_scl.txt")
 
-deg_peat <- writeDESeqResults(dds = dds, num = "Mutant", denom = "Wild-type", log2_cut = 0, return_data = TRUE, filename = "DEG-lists/deg_peat.txt")
 
-deg_peat_2fc <- writeDESeqResults(dds = dds, num = "Mutant", denom = "Wild-type", return_data = TRUE, filename = "DEG-lists/deg_peat_2fc.txt")
