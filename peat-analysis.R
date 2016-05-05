@@ -31,7 +31,7 @@ library(plyr)
 writeDESeqResults <- function(dds, num, denom, 
                               condition = "condition", 
                               log2_cut = 1,  # 
-                              padj_cut = 0.1,
+                              padj_cut = 0.05,
                               return_data = TRUE,
                               filename = NULL) {
         # Convenience function that extracts results from a DESeqResult 
@@ -111,14 +111,11 @@ genePlot <- function(gene_2_plot, dds = dds) {
 #### Load DESeq2 objects. ####
 load("DESeq-objects/DDS_peat.rda")
 
-
 deg_peat <- writeDESeqResults(dds = dds_peat, 
                               num = "Mutant", 
                               denom = "Wild-type", 
                               log2_cut = 0, 
                               return_data = TRUE, 
                               filename = "DEG-lists/deg_peat.txt")
-
-
 
 

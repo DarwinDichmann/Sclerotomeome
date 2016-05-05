@@ -31,7 +31,7 @@ library(plyr)
 writeDESeqResults <- function(dds, num, denom, 
                               condition = "condition", 
                               log2_cut = 1,  # 
-                              padj_cut = 0.1,
+                              padj_cut = 0.05,
                               return_data = TRUE,
                               filename = NULL) {
         # Convenience function that extracts results from a DESeqResult 
