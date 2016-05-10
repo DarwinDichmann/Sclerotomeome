@@ -139,7 +139,14 @@ deg_scl <- writeDESeqResults(dds = dds_som,
                              return_data = TRUE, 
                              filename = "DEG-lists/deg_scl.txt")
 
-save(deg_scl, file = "DESeq-objects/deg_scl.rda")
+deg_scl_all <- writeDESeqResults(dds = dds_som, 
+                             num = "Directed", 
+                             denom = "Control", 
+                             log2_cut = 0,
+                             return_data = TRUE, 
+                             filename = "DEG-lists/deg_scl_all.txt")
+
+save(deg_scl, deg_scl_all, file = "DESeq-objects/deg_scl.rda")
 
 
 #### Scatter plot of DE genes. ####
@@ -201,6 +208,8 @@ de_plot <- de_plot + geom_text(data = dn_means,
                                hjust = 0, vjust= 1.5)
 
 ggsave(de_plot, file = "Figure-plots/Fig2.pdf", width = 6, height = 6)
+
+#### Gene Ontology analysis of scl.
 
 
 
