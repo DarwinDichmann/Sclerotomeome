@@ -158,9 +158,13 @@ scl_means <- summarise(.data = scl_counts,
                        meanDIR = rowMeans(scl_counts[, 5:8]))
 row.names(scl_means) <- rownames(scl_counts)
 
-# Make subset with DEG to highlight on plot.
-deg_scl_names <- row.names(deg_scl)
-deg_scl_means <- subset(scl_means, rownames(scl_means) %in% rownames(deg_scl))
+# Make subsets with DEG to highlight on plot.
+# deg_all_names <- row.names(deg_scl_all)
+deg_all_means <- subset(scl_means, 
+                        row.names(scl_means) %in% row.names(deg_scl_all))
+# deg_scl_names <- row.names(deg_scl)
+deg_scl_means <- subset(scl_means, 
+                        row.names(scl_means) %in% row.names(deg_scl))
 # scl_means[c("Pax1", "Pax9", "AI646519"), ]
 
 # Fit a linear model for plot.
@@ -183,7 +187,13 @@ de_plot <- de_plot + geom_abline(data = lm_fit, colour = "grey20")
 de_plot <- de_plot + annotate("text", colour = "grey20", 
                               label = "slope = 1.095",
                               x = 14, y = 18, size = 4)
-# Add DE genes
+# Add all DE genes.
+de_plot <- de_plot + geom_point(data = deg_all_means,
+                                colour = '#a6cee3',
+                                size = 3,
+                                alpha = 0.7)
+
+# Add DE +2FC genes
 de_plot <- de_plot + geom_point(data = deg_scl_means, 
                                 colour = "#1f78b4", 
                                 size = 3, 
@@ -206,8 +216,8 @@ de_plot <- de_plot + geom_text(data = dn_means,
                                colour = "#ff7f00", 
                                size = 4,
                                hjust = 0, vjust= 1.5)
-
-ggsave(de_plot, file = "Figure-plots/Fig2.pdf", width = 6, height = 6)
+de_plot
+ggsave(de_plot, file = "Figure-plots/Fig2_wAll.pdf", width = 6, height = 6)
 
 #### Gene Ontology analysis of scl.
 
