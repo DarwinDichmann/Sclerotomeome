@@ -159,10 +159,8 @@ scl_means <- summarise(.data = scl_counts,
 row.names(scl_means) <- rownames(scl_counts)
 
 # Make subsets with DEG to highlight on plot.
-# deg_all_names <- row.names(deg_scl_all)
 deg_all_means <- subset(scl_means, 
                         row.names(scl_means) %in% row.names(deg_scl_all))
-# deg_scl_names <- row.names(deg_scl)
 deg_scl_means <- subset(scl_means, 
                         row.names(scl_means) %in% row.names(deg_scl))
 # scl_means[c("Pax1", "Pax9", "AI646519"), ]
@@ -217,7 +215,9 @@ de_plot <- de_plot + geom_text(data = dn_means,
                                size = 4,
                                hjust = 0, vjust= 1.5)
 de_plot
-ggsave(de_plot, file = "Figure-plots/Fig2_wAll.pdf", width = 6, height = 6)
+# ggsave(de_plot, file = "Figure-plots/Fig2_wAll.pdf", width = 6, height = 6)
+rm(deg_all_means, deg_scl_means, deg_scl_dn, deg_scl_up, dn_means, up_means,
+   scl_means, scl_counts, de_plot, lm_fit)  # Do you really need all this?
 
 #### Gene Ontology analysis of scl.
 
