@@ -300,3 +300,60 @@ plot_ribo_cc <- qplot(deg_cc_ribo$log2FoldChange,
 plot_ribo_cc
 ggsave(plot_ribo_cc, filename = "tmp-plots/peat_DEG-CC-RNP_hist.pdf", 
        height = 3, width = 4)
+
+
+######################################################
+#### Scatter plot of peat DEG and ribosomal genes ####
+
+# Extract mean normalized counts from scl data for scatter plot.
+peat_counts <- as.data.frame(counts(dds_peat, normalized = TRUE))
+peat_means <- summarise(.data = peat_counts,
+                        meanWT = rowMeans(peat_counts[, 4:6]), 
+                        meanMUT = rowMeans(peat_counts[, 1:3]))
+row.names(peat_means) <- rownames(peat_counts)
+
+# Make subsets with DEG to highlight on plot.
+deg_peat_means <- subset(peat_means, 
+                         row.names(peat_means) %in% row.names(deg_peat))
+# peat_means[c("Pax1", "Pax9", "AI646519"), ]  # Looks good.
+
+# Fit a linear model for plot.
+lm_fit <- lm(meanMUT ~ meanWT, peat_means)
+
+
+# Extract means of interesting genes to plot.
+deg_rp_means <- subset(peat_means, rownames(peat_means) %in% deg_rp )
+deg_rnp_means <- subset(peat_means, 
+                        rownames(peat_means) %in% rownames(deg_cc_ribo))
+
+# Plot.
+plot_peat <- ggplot(peat_means, aes(log2(meanWT), log2(meanMUT))) 
+plot_peat <- plot_peat + theme_cowplot()
+plot_peat <- plot_peat + xlab("wild-type\nlog2(Normalized Counts)")
+plot_peat <- plot_peat + ylab("peat mutant\nlog2(Normalized counts)")
+plot_peat <- plot_peat + geom_point(colour="grey50", size= 2, alpha= 0.3)
+# Add regression line.
+plot_peat <- plot_peat + geom_abline(data = lm_fit, colour = "grey20")
+plot_peat <- plot_peat + annotate("text", colour = "grey20", 
+                                  label = "slope = 1.008",
+                                  x = 14, y = 18, size = 4)
+# Add all DE genes
+plot_peat <- plot_peat + geom_point(data = deg_peat_means,
+                                    colour = 'skyblue',
+                                    size = 2,
+                                    alpha = 0.5)
+# Add rnp genes.
+plot_peat <- plot_peat + geom_point(data = deg_rnp_means,
+                                    colour = 'red',
+                                    size = 3,
+                                    alpha = 0.7)
+
+# Add ribosomal genes
+plot_peat <- plot_peat + geom_point(data = deg_rp_means,
+                                    colour = "yellow",
+                                    size = 3,
+                                    alpha = 0.7)
+# plot_peat
+ggsave(plot_peat, file = "Figure-plots/Fig4_peat_wRnp.pdf", 
+       width = 6, height = 6)
+# rm(plot_peat, lm_fit, list = ls(pattern = 'means'))  # Clean up plot/means.
