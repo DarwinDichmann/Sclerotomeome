@@ -127,6 +127,7 @@ egoFunc <- function(genes, universe, ont) {
 #################################################
 ##### Load DESeq2 objects and get DE genes. #####
 load("DESeq-objects/DDS_peat.rda")
+# res_peat <- results(dds_peat, contrast = c("condition", "Mutant", "Wild-type"))
 
 deg_peat <- writeDESeqResults(dds = dds_peat, 
                               num = "Mutant", 
@@ -213,7 +214,6 @@ deg_rp <- deg_peat[grep('(Mr|R)p(s|l)', deg_peat$Gene), ]
 deg_trns <- deg_peat[deg_peat$Gene %in% trns_genes, ]
 deg_trns_rp <- rbind(deg_trns, deg_rp)
 deg_trns_rp <- unique(deg_trns_rp)
-qplot(deg_trns_rp$log2FoldChange)
 
 # plot DEG of different classes.
 plot_a <- qplot(deg_peat$log2FoldChange, 
@@ -357,3 +357,31 @@ plot_peat <- plot_peat + geom_point(data = deg_rp_means,
 ggsave(plot_peat, file = "Figure-plots/Fig4_peat_wRnp.pdf", 
        width = 6, height = 6)
 # rm(plot_peat, lm_fit, list = ls(pattern = 'means'))  # Clean up plot/means.
+
+# TODO: Save salient objects.
+
+######################################################
+##### Vulcano Plot of peat DEG with ribosomal genes highlighted. ####
+
+# Create dataframes of results (from 1-DEseq-and-PCA.R) for plotting.
+res_peat_df <- as.data.frame(res_peat)  
+deg_rp_df <- deg_peat[grep('(Mr|R)p(s|l)', deg_peat$Gene), ] 
+# plot them
+plot_peat_v <- ggplot(res_peat_df, aes(log2FoldChange, log10(padj)))
+plot_peat_v <- plot_peat_v + geom_point(colour= 'grey40', size = 2, alpha = 0.5)
+plot_peat_v <- plot_peat_v + theme_cowplot()
+plot_peat_v <- plot_peat_v + geom_point(data = deg_peat,
+                                        colour = 'skyblue',
+                                        size = 2,
+                                        alpha = 0.5)
+plot_peat_v <- plot_peat_v + geom_point(data = deg_rp_df ,
+                                        colour = 'red2',
+                                        size = 2,
+                                        alpha = 0.7)
+plot_peat_v <- plot_peat_v + xlim(c(-1, 1))
+plot_peat_v <- plot_peat_v + ylim(c(0, -20))
+plot_peat_v <- plot_peat_v + xlab("log2(Fold Change)")
+plot_peat_v <- plot_peat_v + ylab("log10(p-adjusted)")
+# plot_peat_v
+ggsave(plot_peat_v, file = "Figure-plots/Fig4_peat-vulcano-wRp.pdf", 
+       width = 4, height = 4)
