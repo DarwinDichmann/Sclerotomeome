@@ -117,7 +117,7 @@ dds_peat <- DESeqDataSetFromHTSeqCount(sampleTable = design_peat,
                                       directory = count_dir, 
                                       design = ~ condition)
 dds_peat <- DESeq(dds_peat)
-res_peat <- results(dds_peat)
+res_peat <- results(dds_peat, contrast = c("condition", "Mutant", "Wild-type"))
 
 
 #################################################
