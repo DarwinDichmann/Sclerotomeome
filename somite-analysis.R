@@ -219,8 +219,57 @@ de_plot
 rm(deg_all_means, deg_scl_means, deg_scl_dn, deg_scl_up, dn_means, up_means,
    scl_means, scl_counts, de_plot, lm_fit)  # Do you really need all this?
 
-#### Gene Ontology analysis of scl.
+#### Gene Ontology analysis of scl   #####
+# TODO: In other scripts; combine GO-tmp.R and scl_GO.R
 
+#### Write all DEG lists for stages/dissected somites ####
+
+# ##########################################################
+# Write DEG lists with default p < 0.05 and any fold change.
+# ##########################################################
+
+# Contrast SomA vs SomB
+deg_soma_b <- writeDESeqResults(dds_som,
+                                num = "SomB",
+                                denom = "SomA",
+                                log2_cut = 0,
+                                filename = "DEG-lists/deg_somab.txt")
+deg_soma_b$Contrast <- rep("SomA_vs_SomB", nrow(deg_soma_b))
+# Contrast SomA vs SomC
+deg_soma_c <- writeDESeqResults(dds_som,
+                                num = "SomC",
+                                denom = "SomA",
+                                log2_cut = 0,
+                                filename = "DEG-lists/deg_somac.txt")
+deg_soma_c$Contrast <- rep("SomA_vs_SomC", nrow(deg_soma_c))
+# Contrast SomA vs SomD
+deg_soma_d <- writeDESeqResults(dds_som,
+                                num = "SomD",
+                                denom = "SomA",
+                                log2_cut = 0,
+                                filename = "DEG-lists/deg_somad.txt")
+deg_soma_d$Contrast <- rep("SomA_vs_SomD", nrow(deg_soma_d))
+# Contrast SomB vs SomC
+deg_somb_c <- writeDESeqResults(dds_som,
+                                num = "SomC",
+                                denom = "SomB",
+                                log2_cut = 0,
+                                filename = "DEG-lists/deg_sombc.txt")
+deg_somb_c$Contrast <- rep("SomB_vs_SomC", nrow(deg_somb_c))
+# Contrast SomB vs SomD
+deg_somb_d <- writeDESeqResults(dds_som,
+                                num = "SomD",
+                                denom = "SomB",
+                                log2_cut = 0,
+                                filename = "DEG-lists/deg_sombd.txt")
+deg_somb_d$Contrast <- rep("SomB_vs_SomD", nrow(deg_somb_d))
+# Contrast SomC vs SomD
+deg_somc_d <- writeDESeqResults(dds_som,
+                                num = "SomD",
+                                denom = "SomC",
+                                log2_cut = 0,
+                                filename = "DEG-lists/deg_somcd.txt")
+deg_somc_d$Contrast <- rep("SomC_vs_SomD", nrow(deg_somc_d))
 
 
 
